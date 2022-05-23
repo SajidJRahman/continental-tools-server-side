@@ -14,18 +14,26 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 const run = async () => {
     try {
         await client.connect();
-        const collectionDB = client.db("continentalTools").collection("products");
+        const collectionProducts = client.db("continentalTools").collection("products");
+        const collectionReviews = client.db("continentalTools").collection("reviews");
 
         app.get('/products', async (req, res) => {
             const query = {};
-            const cursor = collectionDB.find(query);
-            const result = await cursor.toArray(cursor);
+            const cursor = collectionProducts.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        app.get('/reviews', async (req, res) => {
+            const query = {};
+            const cursor = collectionReviews.find(query);
+            const result = await cursor.toArray();
             res.send(result);
         });
 
         app.post('/reviews', async (req, res) => {
             const insertedReview = req.body;
-            const result = await collectionDB.insertOne(insertedReview);
+            const result = await collectionReviews.insertOne(insertedReview);
             res.send(result);
         });
     }
