@@ -22,6 +22,12 @@ const run = async () => {
             const result = await cursor.toArray(cursor);
             res.send(result);
         });
+
+        app.post('/reviews', async (req, res) => {
+            const insertedReview = req.body;
+            const result = await collectionDB.insertOne(insertedReview);
+            res.send(result);
+        });
     }
     finally {
 
