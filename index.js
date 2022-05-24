@@ -24,6 +24,14 @@ const run = async () => {
             res.send(result);
         });
 
+        app.get('/my-reviews', async (req, res) => {
+            const email = req.query.email;
+            const query = { email: email };
+            const cursor = collectionReviews.find(query);
+            const myAddedReviews = await cursor.toArray();
+            res.send(myAddedReviews);
+        });
+
         app.get('/reviews', async (req, res) => {
             const query = {};
             const cursor = collectionReviews.find(query);
