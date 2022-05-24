@@ -16,6 +16,8 @@ const run = async () => {
         await client.connect();
         const collectionProducts = client.db("continentalTools").collection("products");
         const collectionReviews = client.db("continentalTools").collection("reviews");
+        const collectionOrders = client.db("continentalTools").collection("orders");
+        const collectionContact = client.db("continentalTools").collection("contactUs");
 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -49,6 +51,18 @@ const run = async () => {
         app.post('/reviews', async (req, res) => {
             const insertedReview = req.body;
             const result = await collectionReviews.insertOne(insertedReview);
+            res.send(result);
+        });
+
+        app.post('/orders', async (req, res) => {
+            const insertedOrder = req.body;
+            const result = await collectionOrders.insertOne(insertedOrder);
+            res.send(result);
+        });
+
+        app.post('/contact-us', async (req, res) => {
+            const insertedContact = req.body;
+            const result = await collectionContact.insertOne(insertedContact);
             res.send(result);
         });
     }
