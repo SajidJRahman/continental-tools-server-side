@@ -19,6 +19,7 @@ const run = async () => {
         const collectionReviews = client.db("continentalTools").collection("reviews");
         const collectionOrders = client.db("continentalTools").collection("orders");
         const collectionContact = client.db("continentalTools").collection("contactUs");
+        const collectionPayments = client.db("continentalTools").collection("payments");
 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -73,6 +74,22 @@ const run = async () => {
             const query = { _id: ObjectId(infoOrder) };
             const result = await collectionOrders.findOne(query);
             res.send(result);
+        });
+
+        app.patch('/orders/:id', async (req, res) => {
+            const orderId = req.params.id;
+            const paymentInfo = req.body;
+            const query = { _id: ObjectId(orderId) };
+            const updateOrder = {
+                $set: {
+                    paid: true,
+                    transectionId: paymentInfo.transectionId,
+
+                }
+            }
+            const orderUpdateInfo = await collectionOrders.updateOne(query, updateOrder);
+            const result = await collectionPayments.insertOne(paymentInfo);
+            res.send(updateOrder);
         });
 
         app.post('/create-payment-intent', async (req, res) => {
