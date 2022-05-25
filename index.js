@@ -67,6 +67,13 @@ const run = async () => {
             res.send(result);
         });
 
+        app.delete('/orders/:id', async (req, res) => {
+            const deleteOrder = req.params.id;
+            const query = { _id: ObjectId(deleteOrder) };
+            const result = await collectionOrders.deleteOne(query);
+            res.send(result);
+        });
+
         app.post('/contact-us', async (req, res) => {
             const insertedContact = req.body;
             const result = await collectionContact.insertOne(insertedContact);
