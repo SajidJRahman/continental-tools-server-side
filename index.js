@@ -18,6 +18,7 @@ const run = async () => {
         const collectionProducts = client.db("continentalTools").collection("products");
         const collectionReviews = client.db("continentalTools").collection("reviews");
         const collectionOrders = client.db("continentalTools").collection("orders");
+        const collectionNewsletter = client.db("continentalTools").collection("newsletter");
         const collectionContact = client.db("continentalTools").collection("contactUs");
         const collectionPayments = client.db("continentalTools").collection("payments");
 
@@ -56,6 +57,19 @@ const run = async () => {
             res.send(result);
         });
 
+        app.post('/newsletter', async (req, res) => {
+            const insertedEmail = req.body;
+            const result = await collectionNewsletter.insertOne(insertedEmail);
+            res.send(result);
+        });
+
+        app.get('/all-orders', async (req, res) => {
+            const query = {};
+            const cursor = collectionOrders.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
         app.get('/orders', async (req, res) => {
             const currentUser = req.query.email;
             const query = { email: currentUser };
@@ -84,7 +98,6 @@ const run = async () => {
                 $set: {
                     paid: true,
                     transectionId: paymentInfo.transectionId,
-
                 }
             }
             const orderUpdateInfo = await collectionOrders.updateOne(query, updateOrder);
