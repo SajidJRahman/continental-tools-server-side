@@ -29,12 +29,25 @@ const run = async () => {
             res.send(result);
         });
 
+        app.post('/products', async (req, res) => {
+            const insertedProduct = req.body;
+            const result = await collectionProducts.insertOne(insertedProduct);
+            res.send(result);
+        });
+
         app.get('/products/:id', async (req, res) => {
             const productsId = req.params.id;
             const query = { _id: ObjectId(productsId) };
             const result = await collectionProducts.findOne(query);
             res.send(result);
         })
+
+        app.delete('/products/:id', async (req, res) => {
+            const deleteProduct = req.params.id;
+            const query = { _id: ObjectId(deleteProduct) };
+            const result = await collectionProducts.deleteOne(query);
+            res.send(result);
+        });
 
         app.get('/my-reviews', async (req, res) => {
             const email = req.query.email;
@@ -63,14 +76,14 @@ const run = async () => {
             res.send(result);
         });
 
-        app.get('/all-orders', async (req, res) => {
+        app.get('/orders', async (req, res) => {
             const query = {};
             const cursor = collectionOrders.find(query);
             const result = await cursor.toArray();
             res.send(result);
         });
 
-        app.get('/orders', async (req, res) => {
+        app.get('/my-orders', async (req, res) => {
             const currentUser = req.query.email;
             const query = { email: currentUser };
             const result = await collectionOrders.find(query).toArray();
