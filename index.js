@@ -70,6 +70,13 @@ const run = async () => {
             res.send(result);
         });
 
+        app.delete('/reviews/:id', async (req, res) => {
+            const deleteReview = req.params.id;
+            const query = { _id: ObjectId(deleteReview) };
+            const result = await collectionReviews.deleteOne(query);
+            res.send(result);
+        });
+
         app.post('/newsletter', async (req, res) => {
             const insertedEmail = req.body;
             const result = await collectionNewsletter.insertOne(insertedEmail);
@@ -116,6 +123,18 @@ const run = async () => {
             const orderUpdateInfo = await collectionOrders.updateOne(query, updateOrder);
             const result = await collectionPayments.insertOne(paymentInfo);
             res.send(updateOrder);
+        });
+
+        app.patch('/manage-order/:id', async (req, res) => {
+            const orderId = req.params.id;
+            const query = { _id: ObjectId(orderId) };
+            const updateOrder = {
+                $set: {
+                    shipped: true
+                }
+            };
+            const result = await collectionOrders.updateOne(query, updateOrder);
+            res.send(result);
         });
 
         app.post('/create-payment-intent', async (req, res) => {
