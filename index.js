@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
@@ -12,6 +13,23 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.4cpv5.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+const verifyJWT = (req, res, next) => {
+    const authorization = req.headers.authorization;
+    if (!authorization) {
+        res.status(401).send('Unauthorized Access')
+    }
+    const token = authorization.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send('Access Denied');
+        }
+        console.log(decoded.foo) // bar
+        req.decoded = decoded;
+        next();
+    });
+
+}
+
 const run = async () => {
     try {
         await client.connect();
@@ -21,6 +39,20 @@ const run = async () => {
         const collectionNewsletter = client.db("continentalTools").collection("newsletter");
         const collectionContact = client.db("continentalTools").collection("contactUs");
         const collectionPayments = client.db("continentalTools").collection("payments");
+        const collectionUsers = client.db("continentalTools").collection("users");
+
+        app.put('/users/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const query = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: user,
+            };
+            const result = await collectionUsers.updateOne(query, updateDoc, options);
+            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ result, accessToken: token });
+        })
 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -90,11 +122,17 @@ const run = async () => {
             res.send(result);
         });
 
-        app.get('/my-orders', async (req, res) => {
+        app.get('/my-orders', verifyJWT, async (req, res) => {
             const currentUser = req.query.email;
-            const query = { email: currentUser };
-            const result = await collectionOrders.find(query).toArray();
-            res.send(result);
+            const decodedEmail = req.decoded.email;
+            if (currentUser === decodedEmail) {
+                const query = { email: currentUser };
+                const result = await collectionOrders.find(query).toArray();
+                return res.send(result);
+            }
+            else {
+                return res.status(403).send('Access Denied');
+            }
         })
 
         app.post('/orders', async (req, res) => {
