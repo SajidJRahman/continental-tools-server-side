@@ -23,7 +23,6 @@ const verifyJWT = (req, res, next) => {
         if (err) {
             return res.status(403).send('Access Denied');
         }
-        console.log(decoded.foo) // bar
         req.decoded = decoded;
         next();
     });
@@ -68,7 +67,38 @@ const run = async () => {
             const result = await collectionUsers.updateOne(query, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
             res.send({ result, accessToken: token });
-        })
+        });
+
+        app.put('/users/admin/:email', verifyJWT, async (req, res) => {
+            const email = req.params.email;
+            const initiator = req.decoded.email;
+            const initiatorInfo = await collectionUsers.findOne({ email: initiator });
+            if (initiatorInfo.role !== 'admin') {
+                return res.status(403).send({ message: 'Forbidden Access' });
+            }
+            else if (initiatorInfo.role === 'admin') {
+                const query = { email: email };
+                const updateDoc = {
+                    $set: { role: 'admin' },
+                };
+                const result = await collectionUsers.updateOne(query, updateDoc);
+                res.send(result);
+            }
+        });
+
+        app.get('/users', verifyToken, async (req, res) => {
+            const query = {};
+            const cursor = collectionUsers.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await collectionUsers.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+        });
 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -131,7 +161,7 @@ const run = async () => {
             res.send(result);
         });
 
-        app.get('/orders', async (req, res) => {
+        app.get('/orders', verifyToken, async (req, res) => {
             const query = {};
             const cursor = collectionOrders.find(query);
             const result = await cursor.toArray();
