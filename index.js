@@ -30,6 +30,22 @@ const verifyJWT = (req, res, next) => {
 
 }
 
+const verifyToken = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).send({ message: 'Unauthorized Access' })
+    }
+
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden Access' })
+        }
+        req.decoded = decoded;
+        next();
+    });
+}
+
 const run = async () => {
     try {
         await client.connect();
@@ -122,7 +138,7 @@ const run = async () => {
             res.send(result);
         });
 
-        app.get('/my-orders', verifyJWT, async (req, res) => {
+        app.get('/my-orders', verifyToken, async (req, res) => {
             const currentUser = req.query.email;
             const decodedEmail = req.decoded.email;
             if (currentUser === decodedEmail) {
@@ -131,7 +147,7 @@ const run = async () => {
                 return res.send(result);
             }
             else {
-                return res.status(403).send('Access Denied');
+                return res.status(403).send({ message: 'Forbidden Access' });
             }
         })
 
