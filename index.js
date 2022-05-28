@@ -9,9 +9,11 @@ const port = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// URI & CLIENT
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.4cpv5.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+// VERIFY JWT FUNCTION
 const verifyJWT = (req, res, next) => {
     const authorization = req.headers.authorization;
     if (!authorization) {
@@ -28,7 +30,7 @@ const verifyJWT = (req, res, next) => {
 
 }
 
-// Token function
+// TOKEN FUNCTION
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -57,6 +59,7 @@ const run = async () => {
         const collectionUsers = client.db("continentalTools").collection("users");
         const collectionProfile = client.db("continentalTools").collection("profile");
 
+        // MY PROFILE APIs
         app.put('/my-profile/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -78,6 +81,20 @@ const run = async () => {
             res.send(result);
         });
 
+        // USERS & ADMIN APIs
+        app.get('/users', verifyToken, async (req, res) => {
+            const query = {};
+            const cursor = collectionUsers.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        app.get('/admin/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = await collectionUsers.findOne({ email: email });
+            const isAdmin = user.role === 'admin';
+            res.send({ admin: isAdmin })
+        });
 
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
@@ -109,14 +126,6 @@ const run = async () => {
             }
         });
 
-
-        app.get('/users', verifyToken, async (req, res) => {
-            const query = {};
-            const cursor = collectionUsers.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-        });
-
         app.delete('/users/:id', async (req, res) => {
             const deleteUser = req.params.id;
             const query = { _id: ObjectId(deleteUser) };
@@ -124,18 +133,18 @@ const run = async () => {
             res.send(result);
         });
 
-        app.get('/admin/:email', async (req, res) => {
-            const email = req.params.email;
-            const user = await collectionUsers.findOne({ email: email });
-            const isAdmin = user.role === 'admin';
-            res.send({ admin: isAdmin })
-        });
-
-
+        // PRODUCT APIs
         app.get('/products', async (req, res) => {
             const query = {};
             const cursor = collectionProducts.find(query);
             const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        app.get('/products/:id', async (req, res) => {
+            const productsId = req.params.id;
+            const query = { _id: ObjectId(productsId) };
+            const result = await collectionProducts.findOne(query);
             res.send(result);
         });
 
@@ -145,13 +154,6 @@ const run = async () => {
             res.send(result);
         });
 
-        app.get('/products/:id', async (req, res) => {
-            const productsId = req.params.id;
-            const query = { _id: ObjectId(productsId) };
-            const result = await collectionProducts.findOne(query);
-            res.send(result);
-        })
-
         app.delete('/products/:id', async (req, res) => {
             const deleteProduct = req.params.id;
             const query = { _id: ObjectId(deleteProduct) };
@@ -159,7 +161,7 @@ const run = async () => {
             res.send(result);
         });
 
-
+        // REVIEWS APIs
         app.get('/my-reviews', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
@@ -188,13 +190,27 @@ const run = async () => {
             res.send(result);
         });
 
-
+        // NEWSLETTER API
         app.post('/newsletter', async (req, res) => {
             const insertedEmail = req.body;
             const result = await collectionNewsletter.insertOne(insertedEmail);
             res.send(result);
         });
 
+        // MY ORDERS APIs
+        app.get('/orders', verifyToken, async (req, res) => {
+            const query = {};
+            const cursor = collectionOrders.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        app.get('/orders/:id', async (req, res) => {
+            const infoOrder = req.params.id;
+            const query = { _id: ObjectId(infoOrder) };
+            const result = await collectionOrders.findOne(query);
+            res.send(result);
+        });
 
         app.get('/my-orders', verifyToken, async (req, res) => {
             const currentUser = req.query.email;
@@ -209,23 +225,9 @@ const run = async () => {
             }
         })
 
-        app.get('/orders', verifyToken, async (req, res) => {
-            const query = {};
-            const cursor = collectionOrders.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-        });
-
         app.post('/orders', async (req, res) => {
             const insertedOrder = req.body;
             const result = await collectionOrders.insertOne(insertedOrder);
-            res.send(result);
-        });
-
-        app.get('/orders/:id', async (req, res) => {
-            const infoOrder = req.params.id;
-            const query = { _id: ObjectId(infoOrder) };
-            const result = await collectionOrders.findOne(query);
             res.send(result);
         });
 
@@ -244,13 +246,6 @@ const run = async () => {
             res.send(updateOrder);
         });
 
-        app.delete('/orders/:id', async (req, res) => {
-            const deleteOrder = req.params.id;
-            const query = { _id: ObjectId(deleteOrder) };
-            const result = await collectionOrders.deleteOne(query);
-            res.send(result);
-        });
-
         app.patch('/manage-order/:id', async (req, res) => {
             const orderId = req.params.id;
             const query = { _id: ObjectId(orderId) };
@@ -263,7 +258,14 @@ const run = async () => {
             res.send(result);
         });
 
+        app.delete('/orders/:id', async (req, res) => {
+            const deleteOrder = req.params.id;
+            const query = { _id: ObjectId(deleteOrder) };
+            const result = await collectionOrders.deleteOne(query);
+            res.send(result);
+        });
 
+        // STRIPE API
         app.post('/create-payment-intent', async (req, res) => {
             const order = req.body;
             const price = order.product_price;
@@ -278,7 +280,7 @@ const run = async () => {
             });
         });
 
-
+        // CONTACT US API
         app.post('/contact-us', async (req, res) => {
             const insertedContact = req.body;
             const result = await collectionContact.insertOne(insertedContact);
