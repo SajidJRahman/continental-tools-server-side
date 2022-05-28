@@ -55,6 +55,28 @@ const run = async () => {
         const collectionContact = client.db("continentalTools").collection("contactUs");
         const collectionPayments = client.db("continentalTools").collection("payments");
         const collectionUsers = client.db("continentalTools").collection("users");
+        const collectionProfile = client.db("continentalTools").collection("profile");
+
+        app.put('/my-profile/:email', async (req, res) => {
+            const email = req.params.email;
+            const user = req.body;
+            const query = { email: email };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set:
+                    user,
+            };
+            const result = await collectionProfile.updateOne(query, updateDoc, options);
+            res.send(result);
+        });
+
+        app.get('/my-profile/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email: email };
+            const cursor = collectionProfile.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
 
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
@@ -90,6 +112,13 @@ const run = async () => {
             const query = {};
             const cursor = collectionUsers.find(query);
             const result = await cursor.toArray();
+            res.send(result);
+        });
+
+        app.delete('/users/:id', async (req, res) => {
+            const deleteUser = req.params.id;
+            const query = { _id: ObjectId(deleteUser) };
+            const result = await collectionUsers.deleteOne(query);
             res.send(result);
         });
 
