@@ -7,9 +7,9 @@ const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const app = express();
 const port = process.env.PORT || 5000;
 const corsConfig = {
-    origin: ['https://continental-tools.web.app/', 'https://js.stripe.com/', 'https://m.stripe.network/'],
+    origin: ['https://continental-tools.web.app/', ['https://continental-tools.firebaseapp.com/'], 'https://js.stripe.com/', 'https://m.stripe.network/', ['https://continental-tools.herokuapp.com/']],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE']
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
 }
 app.use(cors(corsConfig))
 app.options("*",
