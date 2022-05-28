@@ -4,7 +4,6 @@ const jwt = require('jsonwebtoken');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-
 const app = express();
 const port = process.env.PORT || 5000;
 app.use(cors());
@@ -29,6 +28,7 @@ const verifyJWT = (req, res, next) => {
 
 }
 
+// Token function
 const verifyToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
     if (!authHeader) {
@@ -78,6 +78,7 @@ const run = async () => {
             res.send(result);
         });
 
+
         app.put('/users/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
@@ -108,6 +109,7 @@ const run = async () => {
             }
         });
 
+
         app.get('/users', verifyToken, async (req, res) => {
             const query = {};
             const cursor = collectionUsers.find(query);
@@ -128,6 +130,7 @@ const run = async () => {
             const isAdmin = user.role === 'admin';
             res.send({ admin: isAdmin })
         });
+
 
         app.get('/products', async (req, res) => {
             const query = {};
@@ -155,6 +158,7 @@ const run = async () => {
             const result = await collectionProducts.deleteOne(query);
             res.send(result);
         });
+
 
         app.get('/my-reviews', async (req, res) => {
             const email = req.query.email;
@@ -184,18 +188,13 @@ const run = async () => {
             res.send(result);
         });
 
+
         app.post('/newsletter', async (req, res) => {
             const insertedEmail = req.body;
             const result = await collectionNewsletter.insertOne(insertedEmail);
             res.send(result);
         });
 
-        app.get('/orders', verifyToken, async (req, res) => {
-            const query = {};
-            const cursor = collectionOrders.find(query);
-            const result = await cursor.toArray();
-            res.send(result);
-        });
 
         app.get('/my-orders', verifyToken, async (req, res) => {
             const currentUser = req.query.email;
@@ -209,6 +208,13 @@ const run = async () => {
                 return res.status(403).send({ message: 'Forbidden Access' });
             }
         })
+
+        app.get('/orders', verifyToken, async (req, res) => {
+            const query = {};
+            const cursor = collectionOrders.find(query);
+            const result = await cursor.toArray();
+            res.send(result);
+        });
 
         app.post('/orders', async (req, res) => {
             const insertedOrder = req.body;
@@ -238,6 +244,13 @@ const run = async () => {
             res.send(updateOrder);
         });
 
+        app.delete('/orders/:id', async (req, res) => {
+            const deleteOrder = req.params.id;
+            const query = { _id: ObjectId(deleteOrder) };
+            const result = await collectionOrders.deleteOne(query);
+            res.send(result);
+        });
+
         app.patch('/manage-order/:id', async (req, res) => {
             const orderId = req.params.id;
             const query = { _id: ObjectId(orderId) };
@@ -249,6 +262,7 @@ const run = async () => {
             const result = await collectionOrders.updateOne(query, updateOrder);
             res.send(result);
         });
+
 
         app.post('/create-payment-intent', async (req, res) => {
             const order = req.body;
@@ -264,12 +278,6 @@ const run = async () => {
             });
         });
 
-        app.delete('/orders/:id', async (req, res) => {
-            const deleteOrder = req.params.id;
-            const query = { _id: ObjectId(deleteOrder) };
-            const result = await collectionOrders.deleteOne(query);
-            res.send(result);
-        });
 
         app.post('/contact-us', async (req, res) => {
             const insertedContact = req.body;
