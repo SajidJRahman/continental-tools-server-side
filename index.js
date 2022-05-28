@@ -9,7 +9,7 @@ const port = process.env.PORT || 5000;
 const corsConfig = {
     origin: '*',
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']
+    methods: ['GET', 'POST', 'PUT', 'DELETE']
 }
 app.use(cors(corsConfig))
 app.options("*",
